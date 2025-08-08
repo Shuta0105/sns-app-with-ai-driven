@@ -5,7 +5,11 @@ import Sidebar from "@/components/sidebar/Sidebar";
 import RightSidebar from "@/components/sidebar/RightSidebar";
 import Tweet from "@/components/post/Tweet";
 import PostComposer from "@/components/post/PostComposer";
-import { getPostById } from "@/lib/server-data";
+import {
+  getPostById,
+  getCurrentUserLikes,
+  getCurrentUser,
+} from "@/lib/server-data";
 import MobileNavigation from "@/components/mobile/MobileNavigation";
 
 interface PostDetailPageProps {
@@ -24,6 +28,34 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
     notFound();
   }
 
+  // デバッグ用ログ
+  console.log("Main post replies count:", post._count?.replies);
+  post.replies.forEach((reply, index) => {
+    console.log(
+      `Reply ${index + 1} (${reply.content}) replies count:`,
+      reply._count?.replies
+    );
+  });
+
+  // 現在のユーザーのいいね状態を取得
+  const userLikes = await getCurrentUserLikes([
+    post.id,
+    ...post.replies.map((reply) => reply.id),
+  ]);
+
+  // 現在のユーザー情報を取得
+  const currentUser = await getCurrentUser();
+
+  // SidebarPropsの型に合わせて変換
+  const sidebarUser = currentUser
+    ? {
+        id: currentUser.id,
+        username: currentUser.username,
+        displayName: currentUser.displayName,
+        bio: currentUser.bio || null,
+      }
+    : null;
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Desktop Layout */}
@@ -31,7 +63,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
         <div className="max-w-7xl mx-auto flex">
           {/* Left Sidebar */}
           <div className="w-64 fixed h-full">
-            <Sidebar />
+            <Sidebar currentUser={sidebarUser} />
           </div>
 
           {/* Main Content */}
@@ -59,13 +91,14 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
             {/* Scrollable Content */}
             <div className="h-screen overflow-y-auto">
               {/* Main Post */}
-              <Tweet tweet={post} />
+              <Tweet tweet={post} initialLiked={userLikes.has(post.id)} />
 
               {/* Reply Composer */}
               <div className="border-b border-gray-800">
                 <PostComposer
                   placeholder="Post your reply"
                   buttonText="Reply"
+                  parentId={post.id}
                 />
               </div>
 
@@ -73,7 +106,11 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
               {post.replies.length > 0 && (
                 <div>
                   {post.replies.map((reply) => (
-                    <Tweet key={reply.id} tweet={reply} />
+                    <Tweet
+                      key={reply.id}
+                      tweet={reply}
+                      initialLiked={userLikes.has(reply.id)}
+                    />
                   ))}
                 </div>
               )}
@@ -124,18 +161,26 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
         {/* Mobile Main Content */}
         <div className="flex-1 overflow-y-auto pb-16">
           {/* Main Post */}
-          <Tweet tweet={post} />
+          <Tweet tweet={post} initialLiked={userLikes.has(post.id)} />
 
           {/* Reply Composer */}
           <div className="border-b border-gray-800">
-            <PostComposer placeholder="Post your reply" buttonText="Reply" />
+            <PostComposer
+              placeholder="Post your reply"
+              buttonText="Reply"
+              parentId={post.id}
+            />
           </div>
 
           {/* Replies */}
           {post.replies.length > 0 && (
             <div>
               {post.replies.map((reply) => (
-                <Tweet key={reply.id} tweet={reply} />
+                <Tweet
+                  key={reply.id}
+                  tweet={reply}
+                  initialLiked={userLikes.has(reply.id)}
+                />
               ))}
             </div>
           )}

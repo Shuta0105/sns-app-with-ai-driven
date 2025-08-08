@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Search, MoreHorizontal } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { getTrends, getSuggestedUsers } from "@/lib/server-data";
 import RightSidebarContent from "@/components/sidebar/RightSidebarContent";

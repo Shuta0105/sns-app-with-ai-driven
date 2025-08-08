@@ -1,18 +1,23 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import Sidebar from "@/components/sidebar/Sidebar";
+import Link from "next/link";
+import Image from "next/image";
+import SidebarWrapper from "@/components/sidebar/SidebarWrapper";
 import RightSidebar from "@/components/sidebar/RightSidebar";
 import {
   getUserByUsername,
   getUserPosts,
   getFollowCounts,
 } from "@/lib/server-data";
+import { checkFollowStatus } from "@/lib/actions/follows";
 import { getPostCount } from "@/lib/helpers";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileInfo from "@/components/profile/ProfileInfo";
 import ProfilePosts from "@/components/profile/ProfilePosts";
 import MobileNavigation from "@/components/mobile/MobileNavigation";
 import MobileProfileHeader from "@/components/mobile/MobileProfileHeader";
+import { auth } from "@clerk/nextjs/server";
+import { prisma } from "@/lib/prisma";
 
 interface ProfilePageProps {
   params: Promise<{
@@ -30,11 +35,30 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     notFound();
   }
 
+  // 現在ログインしているユーザーを取得
+  const { userId } = await auth();
+  let isOwnProfile = false;
+
+  if (userId) {
+    // clerkIdを使ってユーザーを取得
+    const currentUser = await prisma.user.findUnique({
+      where: { clerkId: userId },
+    });
+    isOwnProfile = currentUser?.username === username;
+  }
+
   // ユーザーの投稿とフォロー数を取得
   const [posts, followCounts] = await Promise.all([
     getUserPosts(username),
     getFollowCounts(user.id),
   ]);
+
+  // フォロー状態を取得（自分のプロフィールでない場合のみ）
+  let initialIsFollowing = false;
+  if (!isOwnProfile && userId) {
+    const followStatus = await checkFollowStatus(user.id);
+    initialIsFollowing = followStatus.isFollowing;
+  }
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -43,7 +67,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         <div className="max-w-7xl mx-auto flex">
           {/* Left Sidebar */}
           <div className="w-64 fixed h-full">
-            <Sidebar />
+            <SidebarWrapper />
           </div>
 
           {/* Main Content */}
@@ -58,36 +82,27 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
               {/* Profile Banner */}
               <div className="relative h-48 bg-gradient-to-r from-gray-700 to-gray-900">
                 {user.coverImageUrl ? (
-                  <img
+                  <Image
                     src={user.coverImageUrl}
                     alt="Cover"
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
                   />
                 ) : (
                   <div className="absolute inset-0 bg-gray-800 opacity-50"></div>
                 )}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-32 h-32 bg-gray-600 rounded-full flex items-center justify-center border-4 border-black">
-                    {user.profileImageUrl ? (
-                      <img
-                        src={user.profileImageUrl}
-                        alt={user.displayName}
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-4xl font-bold text-white">
-                        {user.displayName.charAt(0)}
-                      </span>
-                    )}
-                  </div>
-                </div>
               </div>
 
               {/* Profile Info */}
               <Suspense
                 fallback={<div className="p-4">Loading profile info...</div>}
               >
-                <ProfileInfo user={user} followCounts={followCounts} />
+                <ProfileInfo
+                  user={user}
+                  followCounts={followCounts}
+                  isOwnProfile={isOwnProfile}
+                  initialIsFollowing={initialIsFollowing}
+                />
               </Suspense>
 
               {/* Tabs */}
@@ -138,38 +153,33 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           {/* Profile Banner */}
           <div className="relative h-32 bg-gradient-to-r from-gray-700 to-gray-900">
             {user.coverImageUrl ? (
-              <img
+              <Image
                 src={user.coverImageUrl}
                 alt="Cover"
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
               />
             ) : (
               <div className="absolute inset-0 bg-gray-800 opacity-50"></div>
             )}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center border-4 border-black">
-                {user.profileImageUrl ? (
-                  <img
-                    src={user.profileImageUrl}
-                    alt={user.displayName}
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="text-2xl font-bold text-white">
-                    {user.displayName.charAt(0)}
-                  </span>
-                )}
-              </div>
-            </div>
           </div>
 
           {/* Profile Info */}
           <div className="relative px-4 pb-4">
             {/* Edit Profile Button */}
             <div className="flex justify-end mt-4">
-              <button className="bg-gray-800 text-white font-bold px-4 py-2 rounded-full hover:bg-gray-700 transition-colors text-sm">
-                Follow
-              </button>
+              {isOwnProfile ? (
+                <Link
+                  href={`/profile/${user.username}/edit`}
+                  className="bg-gray-800 text-white font-bold px-4 py-2 rounded-full hover:bg-gray-700 transition-colors text-sm"
+                >
+                  Edit profile
+                </Link>
+              ) : (
+                <button className="bg-gray-800 text-white font-bold px-4 py-2 rounded-full hover:bg-gray-700 transition-colors text-sm">
+                  Follow
+                </button>
+              )}
             </div>
 
             {/* Profile Details */}

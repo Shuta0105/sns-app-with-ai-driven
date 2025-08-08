@@ -1,4 +1,4 @@
-import Sidebar from "@/components/sidebar/Sidebar";
+import SidebarWrapper from "@/components/sidebar/SidebarWrapper";
 import Timeline from "@/components/timeline/Timeline";
 import RightSidebar from "@/components/sidebar/RightSidebar";
 import MobileNavigation from "@/components/mobile/MobileNavigation";
@@ -15,7 +15,7 @@ export default async function Home() {
         <div className="max-w-7xl mx-auto flex">
           {/* Left Sidebar */}
           <div className="w-64 fixed h-full">
-            <Sidebar />
+            <SidebarWrapper />
           </div>
 
           {/* Main Content */}

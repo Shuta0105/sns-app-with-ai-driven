@@ -3,7 +3,6 @@
 import {
   MessageCircle,
   Repeat2,
-  Heart,
   BarChart3,
   Bookmark,
   Share,
@@ -12,12 +11,14 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { PostWithUser } from "@/lib/types";
+import LikeButton from "./LikeButton";
 
 interface TweetProps {
   tweet: PostWithUser;
+  initialLiked?: boolean;
 }
 
-export default function Tweet({ tweet }: TweetProps) {
+export default function Tweet({ tweet, initialLiked = false }: TweetProps) {
   // 時間のフォーマット関数
   function formatTime(date: Date): string {
     const now = new Date();
@@ -184,34 +185,11 @@ export default function Tweet({ tweet }: TweetProps) {
               <span className="text-xs sm:text-sm">0</span>
             </div>
 
-            <div
-              className="flex items-center space-x-1 sm:space-x-2 text-gray-500 cursor-pointer"
-              style={{ transition: "color 0.2s ease" }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "#ef4444";
-                const icon = e.currentTarget.querySelector("div");
-                if (icon) {
-                  icon.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "#6b7280";
-                const icon = e.currentTarget.querySelector("div");
-                if (icon) {
-                  icon.style.backgroundColor = "transparent";
-                }
-              }}
-            >
-              <div
-                className="p-1.5 sm:p-2 rounded-full"
-                style={{ transition: "background-color 0.2s ease" }}
-              >
-                <Heart className="h-3 w-3 sm:h-4 sm:w-4" />
-              </div>
-              <span className="text-xs sm:text-sm">
-                {tweet._count?.likes || 0}
-              </span>
-            </div>
+            <LikeButton
+              postId={tweet.id}
+              initialLiked={initialLiked}
+              likeCount={tweet._count?.likes || 0}
+            />
 
             <div
               className="flex items-center space-x-1 sm:space-x-2 text-gray-500 cursor-pointer"

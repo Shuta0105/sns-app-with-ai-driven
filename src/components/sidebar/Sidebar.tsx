@@ -15,6 +15,16 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { useUser, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+
+interface SidebarProps {
+  currentUser: {
+    id: string;
+    username: string;
+    displayName: string;
+    bio: string | null;
+  } | null;
+}
 
 const navItems = [
   { icon: Home, label: "Home", active: true, path: "/" },
@@ -31,16 +41,20 @@ const navItems = [
   { icon: MoreHorizontal, label: "More", path: "/more" },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ currentUser }: SidebarProps) {
   const router = useRouter();
-
-  const handleProfileClick = () => {
-    router.push("/profile");
-  };
+  const { user, isLoaded } = useUser();
 
   const handleNavItemClick = (path: string) => {
     if (path === "/profile") {
-      router.push("/profile");
+      // 現在ログインしているユーザーのユーザー名でプロフィールページに遷移
+      if (currentUser?.username) {
+        router.push(`/profile/${currentUser.username}`);
+      } else if (isLoaded && user?.username) {
+        router.push(`/profile/${user.username}`);
+      } else {
+        router.push("/profile");
+      }
     } else if (path === "/") {
       router.push("/");
     }
@@ -92,26 +106,64 @@ export default function Sidebar() {
       </Button>
 
       {/* User Profile */}
-      <div
-        className="flex items-center space-x-3 p-3 rounded-full cursor-pointer"
-        style={{ transition: "background-color 0.2s ease" }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = "#111827";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = "transparent";
-        }}
-        onClick={handleProfileClick}
-      >
-        <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
-          <span className="text-sm font-bold">I</span>
+      <SignedIn>
+        <div className="flex items-center space-x-3 p-3 rounded-full cursor-pointer hover:bg-gray-800 transition-colors">
+          <div className="w-14 h-14 rounded-full flex items-center justify-center overflow-hidden">
+            <UserButton
+              appearance={{
+                elements: {
+                  userButtonAvatarBox: "w-14 h-14",
+                  userButtonTrigger: "w-14 h-14 rounded-full",
+                  userButtonPopoverCard:
+                    "bg-gray-900 border border-gray-700 shadow-lg",
+                  userButtonPopoverActionButton:
+                    "text-gray-300 hover:text-white hover:bg-gray-800",
+                  userButtonPopoverActionButtonText:
+                    "text-gray-300 hover:text-white",
+                  userButtonPopoverFooter: "border-t border-gray-700",
+                },
+              }}
+            />
+          </div>
+          <div className="flex-1">
+            <div className="font-bold text-white">
+              {currentUser?.displayName ||
+                (isLoaded && user?.username ? user.username : "ユーザー")}
+            </div>
+            <div className="text-gray-500 text-sm">
+              {currentUser?.username
+                ? `@${currentUser.username}`
+                : isLoaded && user?.emailAddresses[0]?.emailAddress
+                ? `@${user.emailAddresses[0].emailAddress.split("@")[0]}`
+                : "@user"}
+            </div>
+          </div>
+          <MoreHorizontal className="h-5 w-5 text-gray-400" />
         </div>
-        <div className="flex-1">
-          <div className="font-bold">Irish</div>
-          <div className="text-gray-500 text-sm">@ajueo1245474884</div>
+      </SignedIn>
+
+      <SignedOut>
+        <div
+          className="flex items-center space-x-3 p-3 rounded-full cursor-pointer"
+          style={{ transition: "background-color 0.2s ease" }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "#111827";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+          }}
+          onClick={() => router.push("/sign-in")}
+        >
+          <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
+            <span className="text-sm font-bold text-white">?</span>
+          </div>
+          <div className="flex-1">
+            <div className="font-bold text-white">ログイン</div>
+            <div className="text-gray-500 text-sm">アカウントにログイン</div>
+          </div>
+          <MoreHorizontal className="h-5 w-5 text-gray-400" />
         </div>
-        <MoreHorizontal className="h-5 w-5" />
-      </div>
+      </SignedOut>
     </div>
   );
 }
