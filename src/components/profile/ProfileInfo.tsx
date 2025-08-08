@@ -1,5 +1,8 @@
 import { Calendar } from "lucide-react";
 import { User } from "@/lib/types";
+import Link from "next/link";
+import Image from "next/image";
+import FollowButton from "./FollowButton";
 
 interface ProfileInfoProps {
   user: User;
@@ -7,18 +10,27 @@ interface ProfileInfoProps {
     followers: number;
     following: number;
   };
+  isOwnProfile?: boolean;
+  initialIsFollowing?: boolean;
 }
 
-export default function ProfileInfo({ user, followCounts }: ProfileInfoProps) {
+export default function ProfileInfo({
+  user,
+  followCounts,
+  isOwnProfile = false,
+  initialIsFollowing = false,
+}: ProfileInfoProps) {
   return (
     <div className="relative px-4 pb-4">
       {/* Avatar */}
       <div className="absolute -top-8 sm:-top-16 left-4">
         <div className="w-16 h-16 sm:w-32 sm:h-32 bg-gradient-to-br from-pink-400 to-purple-600 rounded-full flex items-center justify-center border-4 border-black">
           {user.profileImageUrl ? (
-            <img
+            <Image
               src={user.profileImageUrl}
               alt={user.displayName}
+              width={128}
+              height={128}
               className="w-full h-full rounded-full object-cover"
             />
           ) : (
@@ -31,9 +43,20 @@ export default function ProfileInfo({ user, followCounts }: ProfileInfoProps) {
 
       {/* Edit Profile Button */}
       <div className="flex justify-end mt-4">
-        <button className="bg-gray-800 text-white font-bold px-4 sm:px-6 py-2 rounded-full hover:bg-gray-700 transition-colors text-sm sm:text-base">
-          Follow
-        </button>
+        {isOwnProfile ? (
+          <Link
+            href={`/profile/${user.username}/edit`}
+            className="bg-gray-800 text-white font-bold px-4 sm:px-6 py-2 rounded-full hover:bg-gray-700 transition-colors text-sm sm:text-base"
+          >
+            Edit profile
+          </Link>
+        ) : (
+          <FollowButton
+            targetUserId={user.id}
+            initialIsFollowing={initialIsFollowing}
+            isOwnProfile={isOwnProfile}
+          />
+        )}
       </div>
 
       {/* Profile Details */}

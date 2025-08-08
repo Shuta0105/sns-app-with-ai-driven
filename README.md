@@ -1,6 +1,6 @@
 # SNS with AI-Driven
 
-AI駆動のSNSアプリケーションです。Next.js、TypeScript、Prisma、Supabaseを使用して構築されています。
+AI 駆動の SNS アプリケーションです。Next.js、TypeScript、Prisma、Supabase を使用して構築されています。
 
 ## 技術スタック
 
@@ -8,7 +8,7 @@ AI駆動のSNSアプリケーションです。Next.js、TypeScript、Prisma、S
 - **UI**: Tailwind CSS, Shadcn UI, Radix UI
 - **データベース**: PostgreSQL (Supabase)
 - **ORM**: Prisma
-- **認証**: Supabase Auth
+- **認証**: Clerk
 
 ## セットアップ
 
@@ -35,11 +35,19 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 
 # データベース設定
 DATABASE_URL=your_database_url_here
+
+# Clerk設定
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key_here
+CLERK_SECRET_KEY=your_clerk_secret_key_here
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
 ```
 
 ### 3. データベースのセットアップ
 
-Prismaクライアントを生成し、データベースにマイグレーションを適用します：
+Prisma クライアントを生成し、データベースにマイグレーションを適用します：
 
 ```bash
 # Prismaクライアントの生成
@@ -74,11 +82,11 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - `npm run dev` - 開発サーバーの起動
 - `npm run build` - プロダクションビルド
 - `npm run start` - プロダクションサーバーの起動
-- `npm run lint` - ESLintによるコードチェック
-- `npm run db:generate` - Prismaクライアントの生成
+- `npm run lint` - ESLint によるコードチェック
+- `npm run db:generate` - Prisma クライアントの生成
 - `npm run db:push` - データベーススキーマのプッシュ
 - `npm run db:migrate` - データベースマイグレーション
-- `npm run db:studio` - Prisma Studioの起動
+- `npm run db:studio` - Prisma Studio の起動
 
 ## Learn More
 
@@ -94,4 +102,5 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
 # sns-app-with-ai-driven

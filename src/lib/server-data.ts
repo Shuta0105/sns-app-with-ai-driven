@@ -1,5 +1,62 @@
 import { prisma } from "@/lib/prisma";
 import { PostWithUser, User, Trend, SuggestedUser } from "@/lib/types";
+import { auth } from "@clerk/nextjs/server";
+
+export async function getCurrentUser(): Promise<User | null> {
+  try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return null;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId: userId },
+    });
+
+    return user as User | null;
+  } catch (error) {
+    console.error("Error fetching current user:", error);
+    return null;
+  }
+}
+
+export async function getCurrentUserLikes(
+  postIds: string[]
+): Promise<Set<string>> {
+  try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return new Set();
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId: userId },
+    });
+
+    if (!user) {
+      return new Set();
+    }
+
+    const likes = await prisma.like.findMany({
+      where: {
+        userId: user.id,
+        postId: {
+          in: postIds,
+        },
+      },
+      select: {
+        postId: true,
+      },
+    });
+
+    return new Set(likes.map((like) => like.postId));
+  } catch (error) {
+    console.error("Error fetching current user likes:", error);
+    return new Set();
+  }
+}
 
 export async function getPosts(): Promise<PostWithUser[]> {
   try {
@@ -130,6 +187,15 @@ export async function getPostById(id: string): Promise<PostWithUser | null> {
         replies: {
           include: {
             user: true,
+            _count: {
+              select: {
+                likes: true,
+                replies: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
           },
         },
         _count: {
@@ -166,7 +232,9 @@ export async function getTrends(): Promise<Trend[]> {
   ];
 }
 
-export async function getFollowCounts(userId: string): Promise<{ followers: number; following: number }> {
+export async function getFollowCounts(
+  userId: string
+): Promise<{ followers: number; following: number }> {
   try {
     const [followersCount, followingCount] = await Promise.all([
       prisma.follow.count({
